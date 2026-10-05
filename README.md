@@ -245,18 +245,24 @@ kann geerbte Regeln nicht entfernen.
 | Aktion | `powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File %LOCALAPPDATA%\spotify-update-guard.ps1` |
 | RunLevel | `Limited` — die Ordnerrechte gehören dem Benutzer, Admin ist nicht nötig |
 
-**Log:** `%APPDATA%\spicetify\update-guard.log` — eine Zeile je Lauf:
+**Log:** `%APPDATA%\spicetify\update-guard.log` — eine Zeile je Lauf. Hier
+der Lauf vom 5.10.2026, 15:20 Uhr, nachdem im Spotify-Menü auf *Update
+prüfen* geklickt worden war. Übernommen aus dem Log, wobei der
+Benutzerpfad am Ende der Sperr-Zeile abgeschnitten wurde:
 
 ```
-[2026-10-05 14:14:49] Heruntergeladenes Update-Paket wird entfernt: 1 Dateien, 149.4 MB
-[2026-10-05 14:14:49] Update-Reste im Ordner: 40 ~TMP_-Dateien, 1 login.spa - werden entfernt
-[2026-10-05 14:14:49] Update-Reste entfernt.
-[2026-10-05 14:14:49] Ordner-Sperre: anlegen=True loeschen-blockiert=True
-[2026-10-05 14:14:50] EXE-Sperre: 6 Dateien, ueberschreiben-blockiert=True lesen-moeglich=True
-[2026-10-05 14:14:50] Update-Schalter in HKCU: 3 von 3 gesetzt
-[2026-10-05 14:14:50] Version 1.3.1.234 ist die gepinnte Version.
-[2026-10-05 14:14:50] Patch intakt - keine Aktion noetig
+[2026-10-05 15:20:01] Heruntergeladenes Update-Paket wird entfernt: 2 Dateien, 149.4 MB
+[2026-10-05 15:20:01] Ordner-Sperre: anlegen=True loeschen-blockiert=True
+[2026-10-05 15:20:01] Aufgeraeumt: 1 alte Probe-Datei(en)
+[2026-10-05 15:20:01] EXE-Sperre: 6 Dateien, ueberschreiben-blockiert=True lesen-moeglich=True
+[2026-10-05 15:20:01] Update-Schalter in HKCU: 3 von 3 gesetzt
+[2026-10-05 15:20:01] Version 1.3.1.234 ist die gepinnte Version.
+[2026-10-05 15:20:01] Patch intakt - keine Aktion noetig
 ```
+
+Die erste Zeile ist das eigentliche Signal: Der Wächter hat 149,4 MB
+weggeräumt, die Spotify vorher selbst geladen hatte. Alles darunter ist
+der Normallauf, der danach folgt.
 
 ---
 
@@ -321,7 +327,7 @@ Zusätzlich von Hand nachgemessen:
 | Was | Ergebnis nach dem Neustart |
 |---|---|
 | `Spotify.exe` | `1.3.1.234`, Zeitstempel **13:24:14** — unverändert, nie neu deployed |
-| Ordner-ACL | `5gtag:(OI)(CI)(RX,WD,AD)` — Sperre intakt, kein Delete |
+| Ordner-ACL | `<Benutzer>:(OI)(CI)(RX,WD,AD)` — Sperre intakt, kein Delete |
 | Registry | `EnableUpdate=0`, `AutoUpdate=0`, `DisableUpdate=1` |
 | `%LOCALAPPDATA%\Spotify\Update` | existiert nicht — es wurde **kein** Update geladen |
 | `~TMP_*` im Spotify-Ordner | 0 |
