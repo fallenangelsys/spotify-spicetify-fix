@@ -329,10 +329,10 @@ Zusätzlich von Hand nachgemessen:
 
 Entscheidend ist, was **fehlt**: In den Log-Einträgen nach dem Neustart
 steht keine einzige Zeile `Heruntergeladenes Update-Paket wird entfernt`.
-Vor dem Neustart, am 5.10. um 15:20, steht genau eine — mit 149,4 MB, die
-der Wächter weggeräumt hat. Nach dem Neustart wurde also nicht einmal ein
-Paket heruntergeladen. Das ist der Unterschied zwischen * Bremse* und
-*Abwehr*, und er ist hier gemessen.
+Vor dem Neustart stehen im Log genau zwei — um 14:14 eine 1-MB-Datei und
+um 15:20 zwei Dateien mit 149,4 MB, die der Wächter weggeräumt hat. Nach
+dem Neustart wurde also nicht einmal ein Paket heruntergeladen. Das ist
+der Unterschied zwischen *Bremse* und *Abwehr*, und er ist hier gemessen.
 
 Die Einschränkung bleibt: Der Wächter setzt die Sperre bei jeder Anmeldung
 neu. Der Test belegt also, dass der **Zustand** nach einem Reboot stimmt —
