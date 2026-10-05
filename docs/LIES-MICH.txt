@@ -181,9 +181,11 @@ Spotify und Spicetify. Alles laesst sich ueber
     die Abweichung und schreibt die vorhandene Version selbst in
     den Waechter (spotify-update-guard.ps1, WANTED_VERSION), damit
     der Waechter nicht dauernd warnt.
-  - Ein Reboot-Test steht aus. Die Sperre greift gegen genau den
-    Mechanismus, der sie vorher ausgehebelt hat, aber ob sie
-    einen Neustart uebersteht, ist noch nicht gemessen.
+  - Ein Reboot wurde getestet (am 05.10.2026) und hat gehalten:
+    danach keine neue Version, Sperre intakt, kein Update
+    heruntergeladen. Der Waechter setzt die Sperre bei jeder
+    Anmeldung aber neu. Der Test zeigt also, dass der Zustand
+    stimmt - nicht, dass Windows die Rechte allein bewahrt.
   - "Updates wieder erlauben.cmd" wurde nie ausgefuehrt. Das
     Script dahinter ist geschrieben und geprueft, der Widerruf
     selbst aber nie durchgespielt. Vor dem ersten Gebrauch bitte
@@ -220,6 +222,20 @@ Alles nachvollziehbar
   "anlegen=False" heisst: zu dicht - Spotify kann nicht arbeiten.
   Beides wird bei einem Fehler automatisch zurueckgesetzt,
   damit Spotify in jedem Fall startet.
+
+  Beispiel eines Laufs direkt nach einem Neustart am 05.10.2026:
+
+    Ordner-Sperre: anlegen=True loeschen-blockiert=True
+    EXE-Sperre: 6 Dateien, ueberschreiben-blockiert=True lesen-moeglich=True
+    Update-Schalter in HKCU: 3 von 3 gesetzt
+    Version 1.3.1.234 ist die gepinnte Version.
+    Patch intakt - keine Aktion noetig
+
+  Warum das aussagekraeftig ist: Am selben Tag um 15:20 steht im
+  Log noch die Zeile "Heruntergeladenes Update-Paket wird entfernt:
+  2 Dateien, 149.4 MB". Nach dem Neustart steht sie kein einziges
+  Mal mehr - es wurde gar kein Update geladen. Ein Neustart ist also
+  kein Weg, die Sperre zu umgehen.
 
 
 Spotify wurde trotzdem aktualisiert

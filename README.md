@@ -40,6 +40,7 @@
 - [Technische Details](#technische-details)
 - [Drei Windows-Fallen](#drei-windows-fallen)
 - [Prüfen, ob es hält](#prüfen-ob-es-hält)
+- [Reboot-Test](#reboot-test)
 - [Alles rückgängig machen](#alles-rückgängig-machen)
 - [Bekannte Grenzen](#bekannte-grenzen)
 - [Mitmachen](#mitmachen)
@@ -300,6 +301,46 @@ nicht gegriffen — dann lohnt auch der Rest nichts.
 
 ---
 
+## Reboot-Test
+
+Durchgeführt am **5.10.2026**, Rechner heruntergefahren und wieder
+gestartet. Der Wächter läuft über den Anmelde-Trigger und war **29
+Sekunden** nach dem Booten durch (`LastBootUpTime 20:32:08`, erster
+Log-Eintrag `20:32:37`):
+
+```
+[2026-10-05 20:32:37] Ordner-Sperre: anlegen=True loeschen-blockiert=True
+[2026-10-05 20:32:38] EXE-Sperre: 6 Dateien, ueberschreiben-blockiert=True lesen-moeglich=True
+[2026-10-05 20:32:38] Update-Schalter in HKCU: 3 von 3 gesetzt
+[2026-10-05 20:32:38] Version 1.3.1.234 ist die gepinnte Version.
+[2026-10-05 20:32:38] Patch intakt - keine Aktion noetig
+```
+
+Zusätzlich von Hand nachgemessen:
+
+| Was | Ergebnis nach dem Neustart |
+|---|---|
+| `Spotify.exe` | `1.3.1.234`, Zeitstempel **13:24:14** — unverändert, nie neu deployed |
+| Ordner-ACL | `5gtag:(OI)(CI)(RX,WD,AD)` — Sperre intakt, kein Delete |
+| Registry | `EnableUpdate=0`, `AutoUpdate=0`, `DisableUpdate=1` |
+| `%LOCALAPPDATA%\Spotify\Update` | existiert nicht — es wurde **kein** Update geladen |
+| `~TMP_*` im Spotify-Ordner | 0 |
+| Task | `State: Ready`, `LastTaskResult: 0` |
+
+Entscheidend ist, was **fehlt**: In den Log-Einträgen nach dem Neustart
+steht keine einzige Zeile `Heruntergeladenes Update-Paket wird entfernt`.
+Vor dem Neustart, am 5.10. um 15:20, steht genau eine — mit 149,4 MB, die
+der Wächter weggeräumt hat. Nach dem Neustart wurde also nicht einmal ein
+Paket heruntergeladen. Das ist der Unterschied zwischen * Bremse* und
+*Abwehr*, und er ist hier gemessen.
+
+Die Einschränkung bleibt: Der Wächter setzt die Sperre bei jeder Anmeldung
+neu. Der Test belegt also, dass der **Zustand** nach einem Reboot stimmt —
+nicht, dass Windows die Rechte von allein bewahrt. Gegen einen Angreifer,
+der zwischen zwei Wächterläufen (stündlich) handelt, schützt das nicht.
+
+---
+
 ## Alles rückgängig machen
 
 `Updates wieder erlauben.cmd` hebt **alles** auf: Ordner-Sperre,
@@ -329,9 +370,12 @@ Ehrlich benannt, statt hinter Erfolgsmeldungen versteckt:
   gemessen wurde auf Windows 11 mit der `.exe`-Installation nach
   `%APPDATA%\Spotify`. Die Store-/MSIX-Variante ist ein anderer
   Installationspfad mit anderen Rechten und **ungeprüft**.
-- **Ein Reboot ist nicht automatisch getestet.** Die Sperre greift gegen
-  genau den Mechanismus, der sie vorher umgangen hat, aber ob sie einen
-  Neustart übersteht, ist empirisch zu bestätigen — siehe unten.
+- **Der Reboot ist getestet, aber mit einer Einschränkung.** Der
+  Endzustand nach einem Neustart stimmt — siehe
+  [Reboot-Test](#reboot-test). Was dabei *nicht* bewiesen ist: ob Windows
+  die ACL von allein behält. Der Wächter setzt sie bei jeder Anmeldung neu,
+  also wäre ein Verlust unsichtbar. Gemessen ist der Zustand, nicht seine
+  Lebensdauer.
 - **`Updates wieder erlauben.cmd` wurde nie ausgeführt.** Das Skript
   dahinter ist geschrieben und syntaktisch geprüft, aber ein Test des
   Widerrufs steht aus. Vor dem ersten Gebrauch also mit einem Blick in die
@@ -354,7 +398,9 @@ Ehrlich benannt, statt hinter Erfolgsmeldungen versteckt:
 Beiträge sind willkommen, besonders wenn du einen der folgenden Fälle
 unter Windows 10 oder 11 reproduzieren und dokumentieren kannst:
 
-- ein tatsächlicher Reboot-Test der Ordner-Sperre
+- ein Reboot-Test auf **Windows 10** (hier nur auf Windows 11 gemessen)
+- ob die ACL einen Neustart *ohne* den Wächter übersteht, also mit
+  deaktiviertem Task — so lässt sich die beiden Wirkungen trennen
 - Verhalten unter Windows 11 mit den Store-/MSIX-Installation von Spotify
 - Verhalten bei frisch installiertem Spotify ohne Vorinstallation
 
