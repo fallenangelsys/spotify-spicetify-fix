@@ -11,6 +11,22 @@
 > Repo, samt den drei Windows-Fallen, die einen selbst in eine halb
 > installierte Spotify-Version laufen lassen.
 
+> **Womit das getestet ist — und womit nicht:** Alle Messungen in diesem
+> README stammen von **einem** Rechner: Windows 11 Pro x64 mit der
+> **klassischen Spotify-Installation** (also der `.exe` aus dem
+> Spotify-Installer, installiert nach `%APPDATA%\Spotify`). PowerShell 5.1,
+> Spicetify 2.45.3, auf 1.3.1.234 festgenagelt.
+>
+> **Ungeprüft ist die Microsoft-Store-Variante** (MSIX-Paket). Dort liegen
+> die Dateien in einem geschützten `WindowsApps`-Verzeichnis statt in
+> `%APPDATA%\Spotify`; Ordnerpfad, ACLs und Rechtevererbung sind anders, und
+> der Installer gehorcht anderen Regeln. Auf Store-Installationen kann dieses
+> Skript **nichts** verheißen — dort bitte nicht blind laufen lassen.
+>
+> Auch innerhalb der klassischen Installation ist ein Teil empirisch, ein
+> Teil plausibel geschlossen. Was gemessen wurde und was nicht, steht in
+> [Bekannte Grenzen](#bekannte-grenzen).
+
 ---
 
 ## Inhalt
@@ -309,9 +325,25 @@ Ehrlich benannt, statt hinter Erfolgsmeldungen versteckt:
 - **Gegen Windows Update ist sie nicht immun.** Die geprüfte Version ist
   `1.3.1.234`; auf einem anderen Stand installiert das Skript die jeweils
   aktuelle Version und nagelt sie fest.
+- **Nur auf der klassischen Installation getestet.** Siehe den Hinweis oben:
+  gemessen wurde auf Windows 11 mit der `.exe`-Installation nach
+  `%APPDATA%\Spotify`. Die Store-/MSIX-Variante ist ein anderer
+  Installationspfad mit anderen Rechten und **ungeprüft**.
 - **Ein Reboot ist nicht automatisch getestet.** Die Sperre greift gegen
   genau den Mechanismus, der sie vorher umgangen hat, aber ob sie einen
   Neustart übersteht, ist empirisch zu bestätigen — siehe unten.
+- **`Updates wieder erlauben.cmd` wurde nie ausgeführt.** Das Skript
+  dahinter ist geschrieben und syntaktisch geprüft, aber ein Test des
+  Widerrufs steht aus. Vor dem ersten Gebrauch also mit einem Blick in die
+  Log-Ausgabe prüfen.
+- **Die Zielversion ist ein Startwert, kein Versprechen.** In
+  `spotify-alles-einrichten.ps1` und im Wächter steht `1.3.1.234`. Das
+  Skript lädt **keinen** alten Installer nach. Findet es nach der
+  Installation eine andere Version, meldet das nur eine Abweichung
+  („Kein Problem") und schreibt die tatsächlich vorhandene Version in den
+  Wächter — **gepinnt wird also, was gerade installiert ist.** Wer bewusst
+  eine alte Version braucht, installiert sie vorher von Hand und startet
+  danach erst dieses Skript.
 - **Spotify und Spicetify sind Fremdmarken.** Dieses Projekt steht in
   keiner Verbindung zu Spotify AB oder Spicetify.
 

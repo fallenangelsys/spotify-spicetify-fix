@@ -152,6 +152,19 @@ Spotify und Spicetify. Alles laesst sich ueber
 ------------------------------------------------------------
 
   - Es braucht Internet fuer die Erstinstallation.
+  - Es ist nur fuer die KLASSISCHE Spotify-Installation getestet,
+    also die .exe von spotify.com, die sich nach %APPDATA%\Spotify
+    installiert. Wenn du Spotify aus dem Microsoft Store hast
+    (das blaue Store-Logo, kein "Aus dem Internet installieren"),
+    ist alles hier ungeprueft: Dort liegen die Dateien im
+    geschuetzten WindowsApps-Ordner, nicht in %APPDATA%\Spotify.
+    Ordner, Rechte und Installer-Regeln sind anders. Bitte nicht
+    blind laufen lassen.
+  - Es laedt keine alte Spotify-Version nach. Ist nach der
+    Installation eine andere Version da, meldet das Script das
+    nur als Abweichung und pinnt dann das, was gerade installiert
+    ist. Wer eine bestimmte alte Version will, installiert sie
+    vorher selbst und startet danach erst dieses Script.
   - Es kann nicht verhindern, dass der Nutzer selbst im
     Spotify-Menue auf "Update pruefen" klickt. Die Sperre ist
     eine Bremse, keine Festung.
@@ -163,11 +176,18 @@ Spotify und Spicetify. Alles laesst sich ueber
   - Eine bereits zerstoerte Spicetify-Installation wird nicht
     automatisch neu aufgesetzt, sondern nur gemeldet. In dem
     Fall: "Spotify einrichten.cmd" nochmal laufen lassen.
-  - Die Zielversion ist 1.3.1.234. Auf einem anderen Stand
-    installiert das Script die aktuelle Spotify-Version und
-    pinnt sie dann fest. Die Versionsnummer im Waechter
-    (spotify-update-guard.ps1, Zeile WANTED_VERSION) muss dann
-    auf die neue Nummer gesetzt werden.
+  - Die Zielversion ist 1.3.1.234, das ist ein Startwert und
+    kein Versprechen. Auf einem anderen Stand meldet das Script
+    die Abweichung und schreibt die vorhandene Version selbst in
+    den Waechter (spotify-update-guard.ps1, WANTED_VERSION), damit
+    der Waechter nicht dauernd warnt.
+  - Ein Reboot-Test steht aus. Die Sperre greift gegen genau den
+    Mechanismus, der sie vorher ausgehebelt hat, aber ob sie
+    einen Neustart uebersteht, ist noch nicht gemessen.
+  - "Updates wieder erlauben.cmd" wurde nie ausgefuehrt. Das
+    Script dahinter ist geschrieben und geprueft, der Widerruf
+    selbst aber nie durchgespielt. Vor dem ersten Gebrauch bitte
+    die Log-Ausgabe ansehen.
 
 
 ------------------------------------------------------------
