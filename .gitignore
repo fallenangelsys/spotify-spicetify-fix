@@ -1,0 +1,46 @@
+# Keys, Zertifikate, Tokens - NIEMALS committen
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.cer
+*.crx
+*.env
+.env*
+id_rsa*
+secrets/
+
+# Logs und Ausgaben der Skripte
+*.log
+*.log.old
+
+# Build-Artefakte / Archive
+*.zip
+build/
+dist/
+installer_output/
+
+# Ausgaben der Einrichtung (werden zur Laufzeit erzeugt)
+SpotifySetup/
+*.bak
+*.old
+
+# Windows
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Editoren
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node / Python (falls jemand mitdenkt)
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/

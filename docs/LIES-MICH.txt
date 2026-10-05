@@ -1,0 +1,387 @@
+============================================================
+ SPOTIFY Dauerhaft blockiert + Spicetify & Marketplace
+============================================================
+
+Was macht das?
+  Spotify wird installiert und auf eine feste Version gepinnt.
+  Alle Update-Wege werden blockiert, damit Spotify nicht heimlich
+  ein neues Bundle laedt. Spicetify mit Marketplace (Themes,
+  Erweiterungen) wird eingerichtet.
+
+  Ein Hintergrund-Waechter haelt den Zustand dauerhaft: sollte
+  Windows oder Spotify die Sperre doch umgehen, stellt er den
+  Spicetify-Patch beim naechsten Anmelden automatisch wieder her.
+
+
+------------------------------------------------------------
+ SO WIRD'S GEMACHT
+------------------------------------------------------------
+
+1. Den Ordner an einen beliebigen Ort kopieren, z.B. Desktop.
+
+2. "Spotify einrichten.cmd" DOPPELKLICKEN.
+   WICHTIG: einfach doppelklicken, NICHT ueber
+   "Als Administrator ausfuehren". Das Skript fragt die
+   noetigen Rechte selbst an.
+
+3. Warten. Phase 1 installiert Spotify (2-5 Minuten),
+   Phase 2 setzt Sperre und Spicetify.
+   Dazwischen kommt eine Administrator-Abfrage -> "Ja".
+
+4. Fertig. Spotify ist startklar.
+
+
+WICHTIG - warum zweistufig?
+
+  Phase 1 installiert Spotify OHNE Administratorrechte.
+  Das ist Absicht: winget verweigert den
+  Administratorkontext mit der Meldung
+
+    Das Installationsprogramm kann nicht in einem
+    Administratorkontext ausgefuehrt werden.
+
+  Phase 2 setzt danach die Update-Sperre. Dafuer werden
+  Administratorrechte gebraucht, und danach fragt das
+  Skript selbst. Deshalb diese Aufteilung.
+
+  Wer die Datei manuell "Als Administrator" startet,
+  ueberspringt Phase 1 und die Installation schlaegt fehl.
+  Einfach normal doppelklicken genuegt.
+
+
+WICHTIG - bitte den ZIP-Ordner erst vollstaendig entpacken
+
+  Rechtsklick auf die ZIP-Datei -> "In Ordner entpacken".
+  Danach den entpackten Ordner oeffnen und die .cmd doppelklicken.
+
+  Wird die Datei DIREKT aus dem ZIP heraus gestartet, kann
+  Windows sie nicht richtig laden. Es kommt dann:
+
+    Das Argument "...\Temp\xxxx_1sh8b0w.zip.cf4\..." fuer den
+    -File-Parameter ist nicht vorhanden.
+
+  Das ist kein Fehler am Skript, sondern daran liegt, dass die
+  Datei noch im ZIP steckt und Windows sie nur temporaer
+  bereitstellt. Zur Not faengt das Skript das inzwischen selbst
+  ab und kopiert sich nach %LOCALAPPDATA%\SpotifySetup.
+  Sauberer ist aber immer das Entpacken.
+
+
+------------------------------------------------------------
+ DIE DATEIEN
+------------------------------------------------------------
+
+Spotify einrichten.cmd
+    Das Hauptskript. Einfach doppelklicken.
+
+Status anzeigen.cmd
+    Prueft alles, aendert aber NICHTS. Braucht kein Admin.
+    Hier laesst sich jederzeit nachsehen, ob noch alles stimmt.
+
+Updates wieder erlauben.cmd
+    Hebt die Sperre vollstaendig auf: Registry, Dienste,
+    Dateisperre und Waechter werden alle zurueckgenommen.
+    Danach aktualisiert Spotify wieder normal.
+
+spotify-alles-einrichten.ps1
+    Das eigentliche Skript hinter den Doppelklick-Dateien.
+    Laeuft auch direkt:
+        powershell -ExecutionPolicy Bypass -File .\spotify-alles-einrichten.ps1
+    Status nur pruefen (ohne Admin):
+        powershell -ExecutionPolicy Bypass -File .\spotify-alles-einrichten.ps1 -Check
+
+spotify-update-guard.ps1
+    Der Waechter. Wird automatisch nach %LOCALAPPDATA% kopiert
+    und als geplanter Task eingetragen (Anmeldung + stuendlich).
+    Raeumt auch die Reste gescheiterter Update-Versuche auf
+    (siehe unten "WICHTIG - auf Update pruefen geklickt?").
+
+spotify-updates-freigeben.ps1
+    Das Gegenstueck, haelt den Waechter imZaum.
+
+
+------------------------------------------------------------
+ WAS GENAU GEAENDERT WIRD
+------------------------------------------------------------
+
+  HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer
+      DisableAutomaticUpdates = 1
+      Da Spotify ein MSI-Paket ist, laeuft sein Update ueber
+      den Windows Installer. Dieser Schalter ist der wichtigste.
+
+  Dienste wuauserv und UsoSvc
+      Auf "Manual" bzw. deaktiviert, damit Windows Update nicht
+      zusaetzlich nachlegt.
+
+  HKCU\Software\Spotify
+      EnableUpdate / AutoUpdate auf 0, DisableUpdate auf 1.
+      Der Waechter setzt das bei JEDEM Lauf neu, weil Spotify
+      diese Werte beim Update wieder loescht.
+
+  %APPDATA%\Spotify   (DER ORDNER - das ist die entscheidende Sperre)
+      Dem Benutzer wird das Loesch-Recht ENTZOGEN.
+      Er darf dort noch lesen, ausfuehren und NEUE Dateien und
+      Ordner ANLEGEN (Cache, Logs). Loeschen geht nicht mehr.
+
+      Warum ausgerechnet der Ordner: Eine Sperre nur auf den
+      *.exe-Dateien ist wirkungslos. Gesperrte Dateien werden
+      nicht ueberschrieben, sondern geloescht und neu angelegt -
+      und eine neue Datei erbt wieder die vollen Rechte. Genau
+      das ist am 05.10.2026 passiert, Spotify sprang dabei von
+      1.3.1.234 auf 1.3.3.264. Mit der Ordner-Sperre klappt das
+      nicht mehr, das wurde getestet.
+
+  %APPDATA%\Spotify\*.exe
+      Zusaetzlich Schreibschutz (Lesen + Ausfuehren bleibt).
+      SYSTEM und Administratoren behalten Vollzugriff, damit
+      Spotify normal startet.
+
+  Geplanter Task "SpotifyUpdateGuard"
+      Laeuft bei der Anmelden und danach stuendlich.
+
+  %APPDATA%\Spotify\Apps\xpui\index.html
+      Enthaelt den Spicetify-Patch.
+
+Es wird nichts geloescht, keine Datei heruntergeladen ausser
+Spotify und Spicetify. Alles laesst sich ueber
+"Updates wieder erlauben.cmd" rueckgaengig machen.
+
+
+------------------------------------------------------------
+ WAS DAS SCRIPT NICHT KANN
+------------------------------------------------------------
+
+  - Es braucht Internet fuer die Erstinstallation.
+  - Es kann nicht verhindern, dass der Nutzer selbst im
+    Spotify-Menue auf "Update pruefen" klickt. Die Sperre ist
+    eine Bremse, keine Festung.
+  - Die Ordner-Sperre gilt fuer den angemeldeten Benutzer.
+    Wer Spotify als Administrator startet, umgeht sie, weil
+    die Administratoren Vollzugriff behalten. Das ist Absicht:
+    sonst kaeme Spotify nicht mehr an sein Update und der
+    Waechter nicht an die Reparatur.
+  - Eine bereits zerstoerte Spicetify-Installation wird nicht
+    automatisch neu aufgesetzt, sondern nur gemeldet. In dem
+    Fall: "Spotify einrichten.cmd" nochmal laufen lassen.
+  - Die Zielversion ist 1.3.1.234. Auf einem anderen Stand
+    installiert das Script die aktuelle Spotify-Version und
+    pinnt sie dann fest. Die Versionsnummer im Waechter
+    (spotify-update-guard.ps1, Zeile WANTED_VERSION) muss dann
+    auf die neue Nummer gesetzt werden.
+
+
+------------------------------------------------------------
+ PROBLEME
+------------------------------------------------------------
+
+"Das Skript benoetigt Administratorrechte"
+    Rechtsklick auf die .cmd-Datei > Als Administrator ausfuehren.
+
+"winget ist nicht verfuegbar"
+    Das Script installiert dann nichts. Spotify bitte manuell von
+    spotify.com laden, danach das Script erneut starten.
+
+PowerShell blockiert das Script
+    In PowerShell:
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    Danach das Script nochmal starten.
+
+Alles nachvollziehbar
+    Log des Waechters:  %APPDATA%\spicetify\update-guard.log
+
+  Dort steht bei jedem Lauf eine Zeile mit dem Zustand, zum
+  Beispiel:
+
+    Ordner-Sperre: anlegen=True loeschen-blockiert=True
+    EXE-Sperre: 6 Dateien, ueberschreiben-blockiert=True lesen-moeglich=True
+    Update-Schalter in HKCU: 3 von 3 gesetzt
+
+  "loeschen-blockiert=True" heisst: die Sperre haelt.
+  "anlegen=False" heisst: zu dicht - Spotify kann nicht arbeiten.
+  Beides wird bei einem Fehler automatisch zurueckgesetzt,
+  damit Spotify in jedem Fall startet.
+
+
+Spotify wurde trotzdem aktualisiert
+
+  Auf dem Desktop liegt dann die Datei
+  "Spotify wurde aktualisiert.txt". Sie nennt die neue Version.
+
+  Zurueckrollen: "Spotify Spicetify reparieren.cmd" starten.
+  Das installiert die gepinnte Version neu und wendet den
+  Patch wieder an.
+
+
+WICHTIG - auf "Update pruefen" geklickt?
+
+  Die Sperre haelt das Ersetzen der Dateien auf. Sie hindert
+  Spotify aber NICHT daran, die neue Version vorher
+  herunterzuladen und teilweise auszupacken. Beim Klick auf
+  "Updaten" passiert:
+
+    1. ca. 150 MB werden nach %LOCALAPPDATA%\Spotify\Update
+       geladen
+    2. die neue login.spa landet in %APPDATA%\Spotify\Apps
+    3. erst beim Ersetzen der EXE-Dateien scheitert es
+
+  Dann ist Spotify halb neu, halb alt und startet nicht mehr.
+  Der Waechter raeumt das beim naechsten Lauf selbst auf:
+
+    - haengenden Updater-Prozess beenden
+    - Update-Paket loeschen
+    - ~TMP_*-Reste und fremde login.spa entfernen
+    - Ordner-Sperre wieder setzen
+
+  Manuelles Aufraeumen (falls Spotify gerade klemmt):
+
+    powershell -ExecutionPolicy Bypass -File ^
+      "$env:LOCALAPPDATA\spotify-update-guard.ps1"
+
+  Kurzfassung: einfach nicht auf "Update pruefen" klicken.
+  Die Sperre ist eine Bremse, kein Riegel.
+
+
+------------------------------------------------------------
+ SPICETIFY: WELCHE VERSION IST RICHTIG
+------------------------------------------------------------
+
+Die richtige Version ist 2.45.3.
+
+  Das ist die aktuelle stabile Version (erschienen am 03.10.2026).
+  Genau die ist auf diesem Rechner und auf dem PC des Kollegen
+  installiert und laeuft.
+
+  Warum gerade diese:
+
+  - 2.45.3 unterstuetzt Spotify fuer Windows von 1.2.14 bis 1.3.3.
+    Unser Spotify ist 1.3.1.234, liegt also mitten im Bereich.
+    Zu alte Spicetify-Versionen erkennen neuere Spotify-Versionen
+    nicht und lassen die Oberflaeche einfach unveraendert.
+
+  - Der Nachfolger 3.0.0 ist noch nicht fertig. Es gibt ihn nur
+    als rc (release candidate) zum Testen. Finger weg davon, der
+    taugt nicht fuer den Alltag.
+
+  - 2.45.2 ist ebenfalls okay, 2.45.1 auch. Es muss nicht genau
+    2.45.3 sein - nur eben aktuell genug fuer die installierte
+    Spotify-Version.
+
+
+So prueft man die installierte Version:
+
+    spicetify --version
+
+    Erwartet: eine Zahl wie 2.45.3
+    Steht dort nichts oder "spicetify" wird nicht gefunden,
+    ist Spicetify nicht installiert bzw. nicht im Pfad.
+
+
+------------------------------------------------------------
+ SO WIRD SPICETIFY INSTALLIERT
+------------------------------------------------------------
+
+Variante A - ueber winget (das macht das Skript automatisch)
+
+    winget install --id Spicetify.Spicetify --exact --silent ^
+        --accept-package-agreements --accept-source-agreements
+
+  Achtung: winget liefert aktuell nur 2.45.1. Das funktioniert,
+  ist aber zwei Patchstufen aelter als 2.45.3. Fuer den Alltag
+  reicht es - das Skript nimmt diese Variante, damit auf einem
+  fremden PC ueberhaupt erst mal etwas laeuft.
+
+  Ausserdem: winget registriert Spicetify nicht als Paket. Nach
+  der Installation zeigt "winget list" trotzdem "kein Paket
+  gefunden". Das ist kein Fehler. Das Update macht man nicht
+  ueber winget, sondern mit Spicetify selbst (siehe unten).
+
+Variante B - direkt von GitHub (empfohlen, damit 2.45.3 kommt)
+
+    1. Seite oeffnen:
+       https://github.com/spicetify/cli/releases/latest
+    2. Datei "spicetify-2.45.3-windows-x64.zip" herunterladen.
+    3. In einen Ordner entpacken, z.B.
+       C:\Users\<Name>\AppData\Local\spicetify
+       Der Ordner bzw. die Datei spicetify.exe muss dort liegen.
+    4. Diesen Ordner zum Benutzer-PATH hinzufuegen
+       (System > Systeminfo > Erweiterte Systemeinstellungen >
+        Umgebungsvariablen > Path > Bearbeiten).
+    5. Neues Fenster oeffnen und "spicetify --version" testen.
+
+Variante C - wenn es ohne winget und ohne Handarbeit laufen soll
+
+    https://spicetify.app
+    Dort gibt es den Download und eine Anleitung fuer Windows.
+
+
+------------------------------------------------------------
+ NACHDEM SPICETIFY DA IST
+------------------------------------------------------------
+
+Diese drei Schrauben sind Pflicht. Ohne sie passiert nichts -
+kein Fehler, einfach gar nichts:
+
+    spicetify config current_theme       marketplace
+    spicetify config custom_apps         marketplace
+    spicetify config experimental_features 1
+
+  experimental_features MUSS 1 sein. Steht dort 0, ueberspringt
+  Spicetify das Einfuegen des Codes komplett und ohne Meldung.
+  Das ist der haeufigste Grund fuer "es passiert gar nichts".
+
+Danach:
+
+    spicetify backup
+    spicetify apply
+
+  "backup" legt eine Sicherung des Original-Zustands an,
+  "apply" schreibt die Aenderungen in Spotify.
+
+  Zustand pruefen:
+
+    spicetify config current_theme
+    -> muss "marketplace" ausgeben
+
+
+Spicetify aktualisieren (nicht ueber winget):
+
+    spicetify update
+
+  Danach "spicetify apply" wiederholen, sonst ist die Oberflaeche
+  nicht auf dem neuen Stand.
+
+Nach jedem Spotify-Update (oder wenn Spotify den Patch verliert):
+
+    spicetify apply
+
+  Der mitgelieferte Waechter macht das bei diesem Setup von allein.
+
+
+------------------------------------------------------------
+ PROBLEME MIT SPICETIFY
+------------------------------------------------------------
+
+"spicetify" wird nicht gefunden
+    Der Ordner mit spicetify.exe fehlt im PATH. Neues
+    Eingabefenster oeffnen - PATH-Aenderungen gelten erst danach.
+
+"Can't find update endpoint in executable"
+    Beta-/RC-Version installiert. Genau die Version 2.45.x
+    nehmen, kein 3.0.0-rc.
+
+Spicetify laeuft, aber in Spotify aendert sich nichts
+    experimental_features auf 1 setzen (siehe oben) und
+    danach backup + apply wiederholen.
+
+user.css ist 0 Bytes
+    Bei current_theme = marketplace ist das korrekt. Die
+    Gestaltung liefert der Marketplace, nicht die user.css.
+
+
+------------------------------------------------------------
+ WER DAS PAKET BEKOMMEN HAT
+------------------------------------------------------------
+
+Dieser Ordner ist komplett. Wer ihn ausgefuehrt hat, hat
+Spotify mit blockierten Updates und Spicetify-Marketplace.
+Wer die Sperre nicht mehr will, nimmt "Updates wieder erlauben.cmd".
